@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Royalty Statement Software</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #34495e;
+            --success-color: #27ae60;
+            --accent-color: #2980b9;
+            --danger-color: #c0392b;
+            --bg-color: #f4f6f7;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        /* Krutidev Font Support */
+        .kruti-font {
+            font-family: 'Kruti Dev 010', 'Kruti Dev 016', sans-serif !important;
+        }
+
+        .english-label {
+            font-family: 'Segoe UI', Arial, sans-serif !important;
+            font-weight: bold;
+        }
+
+        #workNameDisplayContainer {
+            text-align: center;
+            margin-top: 5px;
+            margin-bottom: 25px;
+            color: #000;
+            font-size: 20px;
+            line-height: 1.5;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            text-transform: uppercase;
+            font-size: 26px;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        /* Google Pill Style Tabs Navigation */
+        .tabs-header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 10px;
+        }
+
+        .tabs-nav {
+            display: flex;
+            gap: 12px;
+        }
+
+        .tab-btn {
+            background: #e3e3e3;
+            color: #1f1f1f;
+            border: none;
+            padding: 10px 24px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 24px;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+        }
+
+        .tab-btn.active {
+            background: #004a77;
+            color: white;
+        }
+
+        /* Rounded Action Buttons Icons Only */
+        .action-buttons-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        .circle-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+            transition: transform 0.2s;
+        }
+
+        .circle-btn:hover { transform: scale(1.05); opacity: 0.9; }
+        .btn-export { background: #27ae60; color: white; }
+        .btn-print { background: #8e44ad; color: white; }
+
+        .page-view { display: none; }
+        .page-view.active { display: block; }
+
+        /* Panels Layout */
+        .control-panel {
+            background: #ebf5fb;
+            padding: 20px;
+            border-radius: 6px;
+            margin-bottom: 25px;
+            border: 1px solid #d6eaf8;
+        }
+
+        /* Compact Multiple Profiles & Backup Utility Layer */
+        .profile-management-mini {
+            background: #f4f6f7;
+            border: 1px solid #ddd;
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .profile-left-side { display: flex; align-items: center; gap: 10px; flex: 1; }
+        .profile-right-side { display: flex; gap: 8px; }
+
+        .mini-select, .mini-input {
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        .mini-input { width: 180px; font-weight: bold; text-transform: uppercase; }
+
+        .btn-system {
+            padding: 8px 14px;
+            font-size: 12px;
+            font-weight: bold;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+        .btn-sys-profile { background: #34495e; color: white; }
+        .btn-sys-backup { background: #7f8c8d; color: white; }
+
+        .date-lock-box {
+            background: #e8f8f5;
+            border: 1px solid #a3e4d7;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .panel-title {
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 12px;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+
+        .row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+
+        .row:last-child { margin-bottom: 0; }
+
+        .form-group {
+            flex: 1;
+            min-width: 150px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            margin-bottom: 5px;
+            font-size: 13px;
+            font-weight: bold;
+            color: var(--secondary-color);
+        }
+
+        input, select {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        input[type="text"]:not(#workNameInput):not(#globalSearchInput), .data-font {
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            text-transform: uppercase; 
+        }
+
+        /* 📝 MINERAL ENTRY PANEL STYLING */
+        .premium-entry-panel {
+            background: #ffffff;
+            border: 2px solid var(--primary-color);
+            border-radius: 8px;
+            padding: 22px;
+            margin-top: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+        }
+        
+        .premium-entry-panel input, .premium-entry-panel select {
+            border: 2px solid #cbd5e1;
+            padding: 11px;
+            font-size: 15px;
+            border-radius: 6px;
+            transition: border-color 0.2s;
+        }
+        
+        .premium-entry-panel input:focus, .premium-entry-panel select:focus {
+            border-color: #004a77;
+            outline: none;
+            background: #fff;
+        }
+
+        .btn-add { background: var(--accent-color); color: white; align-self: flex-end; height: 40px; }
+        
+        .btn-save { 
+            background: #004a77; 
+            color: white; 
+            height: 43px; 
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            padding: 0 25px;
+            transition: background-color 0.2s;
+            text-transform: uppercase;
+        }
+        .btn-save:hover { background: #003352; }
+        
+        .btn-row-action {
+            background: none;
+            border: none;
+            padding: 2px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .btn-delete { color: var(--danger-color); }
+        .btn-edit { color: #d35400; margin-right: 8px; }
+
+        .btn-del-field { background: var(--danger-color); color: white; align-self: flex-end; height: 40px; }
+
+        .label-font { font-family: 'Segoe UI', Arial, sans-serif !important; font-weight: bold; }
+        .value-font { font-family: 'Courier New', Courier, monospace !important; font-weight: bold; }
+
+        .highlight-value-font {
+            font-family: 'Courier New', Courier, monospace !important;
+            font-weight: 900 !important;
+            font-size: 17px !important;
+            color: #000000 !important;
+        }
+
+        .new-entry-highlight td {
+            background-color: #fff9c4 !important;
+            border-top: 1px solid #fbc02d !important;
+            border-bottom: 1px solid #fbc02d !important;
+        }
+
+        /* Tables Formatting */
+        .statement-block {
+            margin-top: 30px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+            background: #fff;
+        }
+
+        .block-header {
+            background: #ffffff;
+            color: #000000;
+            padding: 12px 15px;
+            font-size: 16px;
+            font-weight: bold;
+            text-transform: uppercase;
+            border: 1px solid #ddd;
+            border-bottom: 2px solid #000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sort-control-box {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            font-size: 12px;
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            color: #333;
+            cursor: pointer;
+            text-transform: none;
+        }
+
+        table { width: 100%; border-collapse: collapse; }
+        th {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f2f2f2;
+            color: #333;
+            font-weight: bold;
+            border: 1px solid #ddd;
+            padding: 10px 15px;
+            text-align: left;
+            font-size: 13px;
+        }
+
+        .sno-col {
+            width: 45px !important;
+            text-align: center !important;
+            padding: 10px 5px !important;
+        }
+
+        td.input-data {
+            font-family: 'Courier New', Courier, monospace !important;
+            font-weight: bold;
+            border: 1px solid #ddd;
+            padding: 10px 15px;
+            text-align: left;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+
+        .total-row, .mt-row, .amount-row { background: #fafafa; }
+        .total-row td, .mt-row td, .amount-row td { border: 1px solid #ddd; padding: 10px 15px; }
+        
+        .mt-row td.label-font { color: var(--accent-color); background: #f4f6f7; }
+        .amount-row td.label-font { color: var(--success-color); background: #e8f8f5; }
+        
+        .total-row td.highlight-value-font { background: #fcfcfc; }
+        .mt-row td.highlight-value-font { background: #f4f6f7; }
+        .amount-row td.highlight-value-font { background: #e8f8f5; }
+
+        .summary-box {
+            margin-top: 40px;
+            background: #fff;
+            border: 2px solid var(--primary-color);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .summary-header {
+            background: #ffffff;
+            color: #000000;
+            padding: 12px 15px;
+            font-weight: bold;
+            font-size: 16px;
+            text-transform: uppercase;
+            border-bottom: 2px solid #000;
+        }
+
+        .summary-table th { background: #eaeded; }
+        .summary-table td { border: 1px solid #ddd; padding: 10px 15px; }
+        .grand-total-row { background: #fadbd8 !important; color: var(--danger-color); }
+
+        /* 🔍 COMPACT SEARCH CONTAINER DESIGN (SPACE SAVED) */
+        .global-search-container {
+            margin-top: 15px;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .global-search-mini-input {
+            width: 220px;
+            padding: 6px 10px;
+            border-radius: 4px;
+            border: 1px solid #bdc3c7;
+            font-size: 13px;
+        }
+
+        .error-msg { color: var(--danger-color); font-size: 12px; margin-top: 5px; display: none; }
+
+        /* ==================== 🖨️ STRICT PERFECT B&W PRINT MODE ==================== */
+        @media print {
+            html, body {
+                background: white !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                font-size: 10px !important; 
+                color: #000000 !important;
+            }
+            
+            .container { box-shadow: none !important; padding: 5px !important; max-width: 100% !important; }
+            .tabs-header-container, .control-panel, .action-col, .profile-management-mini, #settingsPage, #entryPage, .sort-control-box, .global-search-container {
+                display: none !important;
+            }
+            
+            #recordsPage { display: block !important; }
+            
+            h1 {
+                display: block !important;
+                background: transparent !important;
+                color: #000000 !important;
+                font-weight: bold !important;
+                font-size: 14px !important;
+                padding: 4px 0 !important;
+                border: none !important;
+                text-align: center !important;
+                margin-bottom: 2px !important;
+                text-transform: uppercase !important;
+            }
+            
+            #workNameDisplayContainer {
+                display: block !important;
+                font-size: 13px !important;
+                color: #000000 !important;
+                text-align: center !important;
+                margin-top: 0 !important;
+                margin-bottom: 20px !important;
+                border-bottom: none !important;
+            }
+            
+            .block-header, .summary-header {
+                background: transparent !important;
+                color: #000000 !important;
+                font-weight: bold !important;
+                font-size: 12px !important;
+                padding: 4px 0 !important;
+                border: none !important;
+                border-bottom: 1.5px solid #000 !important;
+                text-align: center !important;
+            }
+
+            /* 🖨️ CONTINUOUS SINGLE-PAGE FLOW WITHOUT PAGE BREAKS */
+            .statement-block {
+                page-break-inside: avoid !important;
+                page-break-after: auto !important;
+                margin-top: 15px !important;
+                border: none !important;
+            }
+
+            .summary-box {
+                border: 1px solid #000000 !important;
+                page-break-inside: avoid !important;
+                margin-top: 20px !important;
+                page-break-after: avoid !important;
+            }
+
+            table { width: 100% !important; margin-bottom: 8px !important; }
+            th, td {
+                padding: 4px 6px !important; 
+                border: 1px solid #000000 !important;
+                color: #000000 !important;
+                background: transparent !important;
+            }
+
+            th { font-size: 10px !important; }
+            .sno-col { width: 30px !important; padding: 4px 2px !important; }
+            td.input-data { font-size: 11px !important; }
+
+            .total-row td, .mt-row td, .amount-row td, .summary-table td, .new-entry-highlight td {
+                background: transparent !important;
+                color: #000000 !important;
+                font-size: 10px !important;
+            }
+
+            .total-row td.label-font, .mt-row td.label-font, .amount-row td.label-font, .summary-table td.label-font {
+                font-family: 'Segoe UI', Arial, sans-serif !important;
+                font-weight: bold !important;
+            }
+
+            .total-row td.highlight-value-font, .mt-row td.highlight-value-font, .amount-row td.highlight-value-font, .summary-table td.highlight-value-font {
+                font-family: 'Courier New', Courier, monospace !important;
+                font-weight: 900 !important;
+                font-size: 13px !important;
+            }
+
+            .grand-total-row td { font-size: 11px !important; background: transparent !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>ROYALTY STATEMENT</h1>
+    
+    <div id="workNameDisplayContainer">
+        <span class="english-label">NAME OF WORK - </span><span id="workNameValue" class="kruti-font"></span>
+    </div>
+
+    <div class="tabs-header-container">
+        <div class="tabs-nav">
+            <button class="tab-btn active" id="btnSettingsTab" onclick="switchTab('settingsPage', 'btnSettingsTab')">📁 Work Detail</button>
+            <button class="tab-btn" id="btnEntryTab" onclick="switchTab('entryPage', 'btnEntryTab')">📝 Entry Form</button>
+            <button class="tab-btn" id="btnRecordsTab" onclick="switchTab('recordsPage', 'btnRecordsTab')">📊 Statements</button>
+        </div>
+        <div class="action-buttons-container">
+            <button class="circle-btn btn-export" onclick="exportToExcel()" title="DOWNLOAD EXCEL WORKSHEET">📥</button>
+            <button class="circle-btn btn-print" onclick="window.print()" title="PRINT STATEMENT REPORT">🖨️</button>
+        </div>
+    </div>
+
+    <div id="settingsPage" class="page-view active">
+        <div class="control-panel">
+            
+            <div class="profile-management-mini">
+                <div class="profile-left-side">
+                    <span class="english-label" style="font-size:12px; color:var(--secondary-color);">WORK PROFILE:</span>
+                    <select id="activeProfileSelect" class="mini-select" onchange="switchActiveProfile(this.value)"></select>
+                    <input type="text" id="newProfileInputName" class="mini-input" placeholder="NEW PROFILE REF TAG...">
+                    <button type="button" class="btn-system btn-sys-profile" onclick="createNewProjectProfile()">+ ADD WORK</button>
+                </div>
+                <div class="profile-right-side">
+                    <button class="btn-system btn-sys-backup" onclick="exportSystemBackup()">📥 Backup Data</button>
+                    <button class="btn-system btn-sys-backup" onclick="document.getElementById('importFilePicker').click()">📤 Restore Data</button>
+                    <input type="file" id="importFilePicker" style="display:none;" accept=".json" onchange="importSystemBackup(event)">
+                </div>
+            </div>
+
+            <div class="row" style="margin-bottom: 25px;">
+                <div class="form-group" style="min-width: 100%;">
+                    <label style="color: #2c3e50;">🏢 WORK NAME / कार्य का नाम (TYPE IN KRUTIDEV LAYOUT OR ENGLISH):</label>
+                    <input type="text" id="workNameInput" placeholder="Enter Work Name here..." class="kruti-font" style="font-size: 15px; font-weight: bold; padding: 12px;" oninput="handleWorkNameChange()">
+                </div>
+            </div>
+
+            <div class="date-lock-box">
+                <div class="panel-title" style="color: #16a085;">🔒 PARAMETERS LOCK CONFIGURATION (DATE LIMITS & COMBINED RATE):</div>
+                <div class="row">
+                    <div class="form-group">
+                        <label>START DATE:</label>
+                        <input type="date" id="lockStartDate" style="padding: 10px;" onchange="handleRangeChange()">
+                    </div>
+                    <div class="form-group">
+                        <label>END DATE:</label>
+                        <input type="date" id="lockEndDate" style="padding: 10px;" onchange="handleRangeChange()">
+                    </div>
+                    <div class="form-group" style="max-width: 250px;">
+                        <label style="color: #b7950b;">ROYALTY RATE (PER MT):</label>
+                        <input type="number" step="0.01" class="data-font" style="padding: 10px;" id="commonRoyaltyRateInput" value="" placeholder="0.00" oninput="updateCommonRate(this.value)">
+                    </div>
+                </div>
+            </div>
+
+            <div class="date-lock-box" style="background:#f4f6f7; border-color:#bdc3c7;">
+                <div class="panel-title" style="color: var(--secondary-color);">🛠️ MINERAL FIELDS CONFIGURATION (ADD / DELETE MINERAL TYPE):</div>
+                <div class="row">
+                    <div class="form-group" style="flex: 2;">
+                        <label>NAYA MATERIAL KA NAAM DALEIN:</label>
+                        <input type="text" id="newMaterialName" placeholder="e.g., BOULDER" class="data-font" style="padding: 10px;" oninput="this.value = this.value.toUpperCase()">
+                    </div>
+                    <button type="button" class="btn-add" style="height:43px;" onclick="addNewMaterial()">+ ADD FIELD</button>
+                    
+                    <div class="form-group" style="flex: 1.5; margin-left: 15px;">
+                        <label>FIELD DELETE KAREIN:</label>
+                        <select id="deleteMaterialSelect" style="padding: 10px;"></select>
+                    </div>
+                    <button type="button" class="btn-del-field" style="height:43px;" onclick="deleteMaterialField()">❌ DEL FIELD</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="entryPage" class="page-view">
+        <div class="control-panel" style="background:none; border:none; padding:0;">
+            <div class="premium-entry-panel">
+                <div class="panel-title" style="color: #004a77; padding-bottom: 8px; margin-bottom: 18px;">
+                    📝 MAIN MINERAL ENTRY PANEL (INPUT SLIPS DATA HERE)
+                </div>
+                <form id="entryForm" onsubmit="saveFormEntry(event)">
+                    <input type="hidden" id="editingRecordId" value="">
+                    <div class="row">
+                        <div class="form-group" style="flex: 1.1;">
+                            <label>SELECT MATERIAL</label>
+                            <select id="selectMaterial" required class="nav-input"></select>
+                        </div>
+                        <div class="form-group" style="flex: 1.5;">
+                            <label>FORM NO / SLIP NO</label>
+                            <input type="text" id="formNo" maxlength="13" placeholder="e.g. IJ11512073815" class="data-font nav-input" oninput="this.value = this.value.toUpperCase(); cleanErrorsOnInput();" required>
+                            <span id="slipFormatError" class="error-msg">⚠️ ENTRY FORMAAT GALAT HAI! PEHLE 2 ALPHABETS AUR KUL 13 CHARACTERS HONA ZAROORI HAI!</span>
+                            <span id="slipDuplicateError" class="error-msg">⚠️ DUPTICATE ENTRY! YEH SLIP PEHLE SE ENTERED HAI.</span>
+                        </div>
+                        <div class="form-group">
+                            <label>DATE</label>
+                            <input type="date" id="entryDate" class="nav-input" oninput="validateLiveDate()" required>
+                            <span id="dateError" class="error-msg">⚠️ DATE RANGE SE BAHAR HAI!</span>
+                        </div>
+                        <div class="form-group">
+                            <label>WEIGHT (IN TONS)</label>
+                            <input type="number" step="0.01" id="weight" placeholder="0.00" class="data-font nav-input" required>
+                        </div>
+                        
+                        <button type="submit" class="btn-save" id="btnSubmitForm">💾 SAVE</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="recordsPage" class="page-view">
+        <div class="global-search-container">
+            <span class="english-label" style="font-size:12px; color:#555;">🔍 SEARCH SLIP:</span>
+            <input type="text" id="globalSearchInput" class="global-search-mini-input" placeholder="Type text to track..." oninput="applyGlobalLiveSearchFilter(this.value)">
+        </div>
+
+        <div id="statementsContainer"></div>
+
+        <div class="summary-box">
+            <div class="summary-header">MATERIAL WISE STATEMENT SUMMARY</div>
+            <table class="summary-table">
+                <thead>
+                    <tr>
+                        <th class="label-font sno-col">S.NO.</th>
+                        <th class="label-font">MATERIAL NAME</th>
+                        <th class="label-font">TOTAL WEIGHT (MT)</th>
+                        <th class="label-font">RATE (RS)</th>
+                        <th class="label-font">TOTAL AMOUNT (RS)</th>
+                    </tr>
+                </thead>
+                <tbody id="summaryTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+<script>
+    // 1. AAPKI UTILISED FIREBASE APP CONFIGURATION SETTINGS
+    const firebaseConfig = {
+        apiKey: "AIzaSyCGPNGVoJRGMWAZn1yWxPiXn0gn1CsNHhQ",
+        authDomain: "royalty-data-180a9.firebaseapp.com",
+        databaseURL: "https://royalty-data-180a9-default-rtdb.firebaseio.com",
+        projectId: "royalty-data-180a9",
+        storageBucket: "royalty-data-180a9.firebasestorage.app",
+        messagingSenderId: "883311597769",
+        appId: "1:883311597769:web:0356435966f7190096d518",
+        measurementId: "G-WGMM4XKB0D"
+    };
+
+    // Firebase Core aur Cloud Firestore instance shuru karein
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // 2. STATE LOGIC VARIABLE MANAGEMENT
+    let profilesMap = { "DEFAULT_WORK": { name: "DEFAULT_WORK" } };
+    let currentProfileKey = "DEFAULT_WORK";
+
+    let materialsList = [];
+    let royaltyRecords = [];
+    let lockDates = { start: '', end: '' };
+    let commonRoyaltyRate = 0;
+    let savedWorkName = '';
+    
+    let latestRecordId = null;
+    let globalSearchString = "";
+    let sortingOrdersMap = {};
+
+    window.onload = function() {
+        setupArrowKeyNavigation();
+        loadSystemSettings();
+    };
+
+    // Cloud Database se Global Application Settings fetch karein
+    function loadSystemSettings() {
+        db.collection("system_settings").doc("global_config").get().then((doc) => {
+            if (doc.exists) {
+                let data = doc.data();
+                profilesMap = data.profilesMap || { "DEFAULT_WORK": { name: "DEFAULT_WORK" } };
+                currentProfileKey = data.currentProfileKey || "DEFAULT_WORK";
+                sortingOrdersMap = data.sortingOrdersMap || {};
+            }
+            refreshActiveProfileDropdown();
+            loadCurrentProfileDataContext();
+        }).catch((error) => {
+            console.error("Firebase settings error: ", error);
+            refreshActiveProfileDropdown();
+            loadCurrentProfileDataContext();
+        });
+    }
+
+    function saveSystemSettingsToFirebase() {
+        db.collection("system_settings").doc("global_config").set({
+            profilesMap: profilesMap,
+            currentProfileKey: currentProfileKey,
+            sortingOrdersMap: sortingOrdersMap
+        });
+    }
+
+    function refreshActiveProfileDropdown() {
+        const select = document.getElementById('activeProfileSelect');
+        select.innerHTML = '';
+        Object.keys(profilesMap).forEach(k => {
+            let opt = document.createElement('option');
+            opt.value = k; opt.innerText = k;
+            if(k === currentProfileKey) opt.selected = true;
+            select.appendChild(opt);
+        });
+    }
+
+    function createNewProjectProfile() {
+        const input = document.getElementById('newProfileInputName');
+        let val = input.value.trim().toUpperCase().replace(/\s+/g, '_');
+        if(!val) return alert("Kripya Work Profile ka reference name dalein!");
+        if(profilesMap[val]) return alert("Yeh reference key pehle se bani hui hai!");
+
+        profilesMap[val] = { name: val };
+        saveSystemSettingsToFirebase();
+        
+        db.collection("profiles").doc(val).set({
+            materials: ['GRIT', 'DUST', 'SAND'],
+            lockDates: { start: '', end: '' },
+            commonRoyaltyRate: 0,
+            savedWorkName: ''
+        }).then(() => {
+            input.value = '';
+            switchActiveProfile(val);
+        });
+    }
+
+    function switchActiveProfile(profileKey) {
+        currentProfileKey = profileKey;
+        saveSystemSettingsToFirebase();
+        loadCurrentProfileDataContext();
+    }
+
+    function loadCurrentProfileDataContext() {
+        db.collection("profiles").doc(currentProfileKey).get().then((doc) => {
+            if (doc.exists) {
+                let data = doc.data();
+                materialsList = data.materials || ['GRIT', 'DUST', 'SAND'];
+                lockDates = data.lockDates || { start: '', end: '' };
+                commonRoyaltyRate = parseFloat(data.commonRoyaltyRate) || 0;
+                savedWorkName = data.savedWorkName || '';
+            } else {
+                materialsList = ['GRIT', 'DUST', 'SAND'];
+                lockDates = { start: '', end: '' };
+                commonRoyaltyRate = 0;
+                savedWorkName = '';
+            }
+
+            document.getElementById('lockStartDate').value = lockDates.start;
+            document.getElementById('lockEndDate').value = lockDates.end;
+            document.getElementById('entryDate').valueAsDate = new Date();
+            document.getElementById('workNameInput').value = savedWorkName;
+            document.getElementById('commonRoyaltyRateInput').value = commonRoyaltyRate || '';
+            document.getElementById('editingRecordId').value = '';
+            document.getElementById('formNo').value = '';
+            document.getElementById('weight').value = '';
+            document.getElementById('globalSearchInput').value = '';
+            document.getElementById('btnSubmitForm').innerText = "💾 SAVE";
+            latestRecordId = null;
+            globalSearchString = "";
+
+            handleWorkNameChange();
+            updateMaterialDropdowns();
+            hideErrors();
+
+            fetchRecordsFromFirebase();
+        });
+    }
+
+    function fetchRecordsFromFirebase() {
+        db.collection("profiles").doc(currentProfileKey).collection("records").get().then((querySnapshot) => {
+            royaltyRecords = [];
+            querySnapshot.forEach((doc) => {
+                let res = doc.data();
+                res.id = doc.id;
+                royaltyRecords.push(res);
+            });
+            renderAllStatements();
+        });
+    }
+
+    function hideErrors() {
+        document.getElementById('slipFormatError').style.display = 'none';
+        document.getElementById('slipDuplicateError').style.display = 'none';
+    }
+
+    function cleanErrorsOnInput() {
+        hideErrors();
+    }
+
+    function setupArrowKeyNavigation() {
+        const inputs = Array.from(document.querySelectorAll('.nav-input'));
+        inputs.forEach((input, index) => {
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    const nextInput = inputs[index + 1];
+                    if (nextInput) nextInput.focus();
+                }
+                if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    const prevInput = inputs[index - 1];
+                    if (prevInput) prevInput.focus();
+                }
+            });
+        });
+    }
+
+    function validateSlipOnSubmit() {
+        const slipVal = document.getElementById('formNo').value.trim();
+        const editId = document.getElementById('editingRecordId').value;
+        const formatError = document.getElementById('slipFormatError');
+        const duplicateError = document.getElementById('slipDuplicateError');
+
+        const formatValid = /^[A-Z]{2}[A-Z0-9]{11}$/.test(slipVal);
+        formatError.style.display = formatValid ? 'none' : 'block';
+
+        const isDuplicate = royaltyRecords.some(r => r.formNo === slipVal && r.id != editId);
+        duplicateError.style.display = isDuplicate ? 'block' : 'none';
+
+        return formatValid && !isDuplicate;
+    }
+
+    function handleWorkNameChange() {
+        let val = document.getElementById('workNameInput').value;
+        const valueSpan = document.getElementById('workNameValue');
+        const container = document.getElementById('workNameDisplayContainer');
+        
+        if(val.trim() !== "") {
+            valueSpan.innerText = val;
+            container.style.display = "block";
+        } else {
+            valueSpan.innerText = "";
+            container.style.display = "none";
+        }
+        db.collection("profiles").doc(currentProfileKey).update({ savedWorkName: val });
+    }
+
+    function switchTab(pageId, btnId) {
+        document.querySelectorAll('.page-view').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(pageId).classList.add('active');
+        document.getElementById(btnId).classList.add('active');
+    }
+
+    function handleRangeChange() {
+        lockDates.start = document.getElementById('lockStartDate').value;
+        lockDates.end = document.getElementById('lockEndDate').value;
+        db.collection("profiles").doc(currentProfileKey).update({ lockDates: lockDates }).then(() => {
+            validateLiveDate();
+            renderAllStatements();
+        });
+    }
+
+    function validateLiveDate() {
+        const entryDateVal = document.getElementById('entryDate').value;
+        const errorSpan = document.getElementById('dateError');
+        if (!entryDateVal || !lockDates.start || !lockDates.end) { errorSpan.style.display = 'none'; return true; }
+        if (entryDateVal < lockDates.start || entryDateVal > lockDates.end) { errorSpan.style.display = 'block'; return false; } 
+        else { errorSpan.style.display = 'none'; return true; }
+    }
+
+    function updateCommonRate(val) {
+        commonRoyaltyRate = val ? parseFloat(val) : 0;
+        db.collection("profiles").doc(currentProfileKey).update({ commonRoyaltyRate: commonRoyaltyRate }).then(() => {
+            renderAllStatements();
+        });
+    }
+
+    function updateMaterialDropdowns() {
+        const select = document.getElementById('selectMaterial');
+        const delSelect = document.getElementById('deleteMaterialSelect');
+        select.innerHTML = ''; delSelect.innerHTML = '';
+        materialsList.forEach(mat => {
+            let opt1 = document.createElement('option'); opt1.value = mat; opt1.innerText = mat; select.appendChild(opt1);
+            let opt2 = document.createElement('option'); opt2.value = mat; opt2.innerText = mat; delSelect.appendChild(opt2);
+        });
+    }
+
+    function addNewMaterial() {
+        const input = document.getElementById('newMaterialName');
+        const matName = input.value.trim().toUpperCase();
+        if(!matName) return alert("KRIPYA MATERIAL KA NAAM DALEIN!");
+        if(materialsList.includes(matName)) return alert("YEH MATERIAL PEHLE SE ADD HAI!");
+        materialsList.push(matName);
+        db.collection("profiles").doc(currentProfileKey).update({ materials: materialsList }).then(() => {
+            input.value = ''; updateMaterialDropdowns(); renderAllStatements();
+        });
+    }
+
+    function deleteMaterialField() {
+        const select = document.getElementById('deleteMaterialSelect');
+        const matToDelete = select.value;
+        if(!matToDelete) return;
+        if(confirm(`WARNING: Kya aap sach me "${matToDelete}" ko delete karna chahte hain?`)) {
+            materialsList = materialsList.filter(m => m !== matToDelete);
+            db.collection("profiles").doc(currentProfileKey).update({ materials: materialsList });
+            
+            let batch = db.batch();
+            db.collection("profiles").doc(currentProfileKey).collection("records")
+              .where("material", "==", matToDelete).get().then((snapshot) => {
+                  snapshot.forEach(doc => batch.delete(doc.ref));
+                  batch.commit().then(() => {
+                      fetchRecordsFromFirebase();
+                      updateMaterialDropdowns();
+                  });
+              });
+        }
+    }
+
+    function saveFormEntry(event) {
+        event.preventDefault();
+        if (!lockDates.start || !lockDates.end) return alert("KRIPYA PEHLE UPAR 'DATE RANGE LOCK' SET KAREIN!");
+        if (!validateLiveDate()) return alert("ENTRY BLOCK HAI! SELECTED RANGE KE BEECH KI DATE HI CHALEGI.");
+        if (!validateSlipOnSubmit()) return;
+
+        const editId = document.getElementById('editingRecordId').value;
+        
+        const recordData = {
+            material: document.getElementById('selectMaterial').value,
+            formNo: document.getElementById('formNo').value.trim().toUpperCase(),
+            date: document.getElementById('entryDate').value,
+            weight: parseFloat(document.getElementById('weight').value),
+            timestamp: Date.now()
+        };
+
+        if (editId) {
+            db.collection("profiles").doc(currentProfileKey).collection("records").doc(editId).set(recordData).then(() => {
+                latestRecordId = editId;
+                document.getElementById('editingRecordId').value = '';
+                document.getElementById('btnSubmitForm').innerText = "💾 SAVE";
+                postSaveActions();
+            });
+        } else {
+            let newDocRef = db.collection("profiles").doc(currentProfileKey).collection("records").doc();
+            newDocRef.set(recordData).then(() => {
+                latestRecordId = newDocRef.id;
+                postSaveActions();
+            });
+        }
+    }
+
+    function postSaveActions() {
+        document.getElementById('formNo').value = ''; document.getElementById('weight').value = '';
+        hideErrors();
+        fetchRecordsFromFirebase();
+        document.querySelector('.nav-input').focus();
+    }
+
+    function editRecord(id) {
+        let record = royaltyRecords.find(r => r.id == id);
+        if (!record) return;
+
+        document.getElementById('editingRecordId').value = record.id;
+        document.getElementById('selectMaterial').value = record.material;
+        document.getElementById('formNo').value = record.formNo;
+        document.getElementById('entryDate').value = record.date;
+        document.getElementById('weight').value = record.weight;
+
+        document.getElementById('btnSubmitForm').innerText = "🔄 UPDATE";
+        switchTab('entryPage', 'btnEntryTab');
+        validateLiveDate();
+        hideErrors();
+    }
+
+    function deleteRecord(id) {
+        if(confirm("KYA AAP IS ENTRY KO HATANA CHAHTE HAIN?")) {
+            if(latestRecordId == id) latestRecordId = null;
+            db.collection("profiles").doc(currentProfileKey).collection("records").doc(id).delete().then(() => {
+                fetchRecordsFromFirebase();
+            });
+        }
+    }
+
+    function applyGlobalLiveSearchFilter(queryVal) {
+        globalSearchString = queryVal.trim().toUpperCase();
+        renderAllStatements();
+    }
+
+    function updateTableSortingOrder(material, orderValue) {
+        sortingOrdersMap[material] = orderValue;
+        saveSystemSettingsToFirebase();
+        renderAllStatements();
+    }
+
+    function exportSystemBackup() {
+        let backupData = { profilesMap: profilesMap, currentProfileKey: currentProfileKey, records: royaltyRecords, materials: materialsList, lockDates: lockDates, rate: commonRoyaltyRate, workName: savedWorkName };
+        let blob = new Blob([JSON.stringify(backupData, null, 2)], { type: "application/json" });
+        let url = URL.createObjectURL(blob);
+        let link = document.createElement("a");
+        link.href = url;
+        link.download = `Royalty_Cloud_Backup_${new Date().toISOString().slice(0, 10)}.json`;
+        document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    }
+
+    function importSystemBackup(event) {
+        const file = event.target.files[0]; if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                let data = JSON.parse(e.target.result);
+                if (confirm("Warning: Data cloud par restore hoga. Purana data overwrite ho sakta hai. Continue karein?")) {
+                    db.collection("system_settings").doc("global_config").set({
+                        profilesMap: data.profilesMap || profilesMap,
+                        currentProfileKey: data.currentProfileKey || currentProfileKey,
+                        sortingOrdersMap: {}
+                    });
+                    alert("Backup Pull Successful. Page reload ho raha hai...");
+                    location.reload();
+                }
+            } catch (err) { alert("File parsing error."); }
+        };
+        reader.readAsText(file);
+    }
+
+    function renderAllStatements() {
+        const container = document.getElementById('statementsContainer');
+        container.innerHTML = '';
+        const summaryBody = document.getElementById('summaryTableBody');
+        summaryBody.innerHTML = '';
+
+        let grandMT = 0, grandAmount = 0;
+        let summarySerial = 1;
+
+        materialsList.forEach(mat => {
+            let filtered = royaltyRecords.filter(r => {
+                if (r.material !== mat) return false;
+                if (lockDates.start && lockDates.end) return r.date >= lockDates.start && r.date <= lockDates.end;
+                return true;
+            });
+
+            if(globalSearchString) {
+                filtered = filtered.filter(r => r.formNo.includes(globalSearchString));
+            }
+
+            let currentSortOrder = sortingOrdersMap[mat] || "asc";
+            
+            filtered.sort((a, b) => {
+                if (currentSortOrder === "asc") {
+                    return new Date(a.date) - new Date(b.date);
+                } else if (currentSortOrder === "desc") {
+                    return new Date(b.date) - new Date(a.date);
+                } else if (currentSortOrder === "recent") {
+                    return b.timestamp - a.timestamp;
+                }
+            });
+
+            let totalWeight = filtered.reduce((sum, item) => sum + item.weight, 0);
+            let mtValue = totalWeight > 0 ? (totalWeight / 1.8) : 0;
+            let totalAmount = mtValue * commonRoyaltyRate;
+
+            grandMT += mtValue; grandAmount += totalAmount;
+
+            let block = document.createElement('div');
+            block.className = 'statement-block';
+            
+            let html = `
+                <div class="block-header">
+                    <span>NAME OF MINERAL - ${mat}</span>
+                    <select class="sort-control-box" onchange="updateTableSortingOrder('${mat}', this.value)">
+                        <option value="asc" ${currentSortOrder === "asc" ? "selected" : ""}>📅 OLDEST FIRST</option>
+                        <option value="desc" ${currentSortOrder === "desc" ? "selected" : ""}>📅 NEWEST FIRST</option>
+                        <option value="recent" ${currentSortOrder === "recent" ? "selected" : ""}>⏱️ RECENT ENTRY FIRST</option>
+                    </select>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="label-font sno-col">S.NO.</th>
+                            <th class="label-font">FORM NO</th>
+                            <th class="label-font">DATE</th>
+                            <th class="label-font">WEIGHT OF MINERAL (IN TONS)</th>
+                            <th class="action-col label-font">ACTION</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+
+            if(filtered.length === 0) {
+                html += `<tr><td colspan="5" class="input-data" style="color:#999; text-align:center;">IS DATE RANGE ME KOI ENTRY NAHI HAI.</td></tr>`;
+            } else {
+                let serialNo = 1;
+                filtered.forEach(item => {
+                    let formattedDate = item.date.split('-').reverse().join('-');
+                    let highlightClass = (item.id === latestRecordId) ? "new-entry-highlight" : "";
+                    
+                    html += `<tr class="${highlightClass}">
+                                <td class="input-data sno-col">${serialNo++}</td>
+                                <td class="input-data">${item.formNo}</td>
+                                <td class="input-data">${formattedDate}</td>
+                                <td class="input-data">${item.weight.toFixed(2)}</td>
+                                <td style="text-align:center;" class="action-col input-data">
+                                    <button class="btn-row-action btn-edit" onclick="editRecord('${item.id}')" title="Edit">✏️</button>
+                                    <button class="btn-row-action btn-delete" onclick="deleteRecord('${item.id}')">❌</button>
+                                </td>
+                            </tr>`;
+                });
+            }
+
+            html += `   <tr class="total-row">
+                            <td colspan="3" class="label-font">TOTAL WEIGHT (TONS)</td>
+                            <td colspan="2" class="highlight-value-font">${totalWeight.toFixed(2)}</td>
+                        </tr>
+                        <tr class="mt-row">
+                            <td colspan="3" class="label-font">TOTAL WEIGHT (MT) </td>
+                            <td colspan="2" class="highlight-value-font">${mtValue.toFixed(4)}</td>
+                        </tr>
+                        <tr class="amount-row">
+                            <td colspan="3" class="label-font">TOTAL AMOUNT (RS.)</td>
+                            <td colspan="2" class="highlight-value-font">RS. ${totalAmount.toFixed(2)}</td>
+                        </tr>
+                    </tbody>
+                </table>`;
+
+            block.innerHTML = html; container.appendChild(block);
+
+            let sumRow = document.createElement('tr');
+            sumRow.innerHTML = `<td class="input-data sno-col">${summarySerial++}</td>
+                                <td class="label-font">${mat}</td>
+                                <td class="highlight-value-font" style="font-size:14px !important;">${mtValue.toFixed(4)}</td>
+                                <td class="highlight-value-font" style="font-size:14px !important;">${commonRoyaltyRate.toFixed(2)}</td>
+                                <td class="highlight-value-font" style="font-size:14px !important;">RS. ${totalAmount.toFixed(2)}</td>`;
+            summaryBody.appendChild(sumRow);
+        });
+
+        let finalGrandRow = document.createElement('tr');
+        finalGrandRow.className = 'grand-total-row';
+        finalGrandRow.innerHTML = `<td class="sno-col"></td>
+                                    <td class="label-font"><strong>GRAND TOTAL</strong></td>
+                                    <td class="highlight-value-font" style="font-size:16px !important;"><strong>${grandMT.toFixed(4)}</strong></td>
+                                    <td class="highlight-value-font" style="font-size:16px !important;"><strong>${commonRoyaltyRate.toFixed(2)}</strong></td>
+                                    <td class="highlight-value-font" style="font-size:16px !important;"><strong>RS. ${grandAmount.toFixed(2)}</strong></td>`;
+        summaryBody.appendChild(finalGrandRow);
+    }
+
+    function exportToExcel() {
+        let titleName = savedWorkName || 'ROYALTY_STATEMENT';
+        let rangeHeading = (lockDates.start && lockDates.end) ? `Statement Period: ${lockDates.start.split('-').reverse().join('-')} to ${lockDates.end.split('-').reverse().join('-')}` : "All Saved Records";
+
+        let excelTemplate = `
+        <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+        <head>
+            <style>
+                table { border-collapse: collapse; margin-bottom: 20px; }
+                th, td { border: 1px solid #aaaaaa; padding: 6px; text-align: left; }
+                .main-header { font-size: 14px; font-weight: bold; text-align: center; }
+                .block-title { font-weight: bold; background-color: #ffffff; color: #000000; font-size: 13px; }
+                .th-style { background-color: #f2f2f2; font-weight: bold; }
+                .sno-xl-width { width: 40px; text-align: center; }
+                .total-style { font-weight: bold; background-color: #fafafa; }
+                .grand-total { font-weight: bold; background-color: #fadbd8; color: #c0392b; }
+            </style>
+        </head>
+        <body>
+            <div class="main-header">ROYALTY STATEMENT</div>
+            <div class="main-header">NAME OF WORK - ${titleName}</div>
+            <div class="main-header">${rangeHeading}</div>
+            <br/>`;
+
+        materialsList.forEach(mat => {
+            const filtered = royaltyRecords.filter(r => {
+                if (r.material !== mat) return false;
+                if (lockDates.start && lockDates.end) return r.date >= lockDates.start && r.date <= lockDates.end;
+                return true;
+            });
+
+            let totalWeight = filtered.reduce((sum, item) => sum + item.weight, 0);
+            let mtValue = totalWeight > 0 ? (totalWeight / 1.8) : 0;
+            let totalAmount = mtValue * commonRoyaltyRate;
+
+            excelTemplate += `
+            <table>
+                <thead>
+                    <tr><th colspan="4" class="block-title">NAME OF MINERAL - ${mat}</th></tr>
+                    <tr>
+                        <th class="th-style sno-xl-width">S.NO.</th>
+                        <th class="th-style">FORM NO</th>
+                        <th class="th-style">DATE</th>
+                        <th class="th-style">WEIGHT OF MINERAL (IN TONS)</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+
+            if(filtered.length === 0) {
+                excelTemplate += `<tr><td colspan="4" style="text-align:center; color:#999;">No Records Found</td></tr>`;
+            } else {
+                let xlSerial = 1;
+                filtered.forEach(item => {
+                    let formattedDate = item.date.split('-').reverse().join('-');
+                    excelTemplate += `<tr><td class="sno-xl-width">${xlSerial++}</td><td>${item.formNo}</td><td>${formattedDate}</td><td>${item.weight.toFixed(2)}</td></tr>`;
+                });
+            }
+
+            excelTemplate += `
+                <tr class="total-style"><td colspan="3">TOTAL WEIGHT (TONS)</td><td>${totalWeight.toFixed(2)}</td></tr>
+                <tr class="total-style" style="color:#2980b9;"><td colspan="3">TOTAL WEIGHT (MT)</td><td>${mtValue.toFixed(4)}</td></tr>
+                <tr class="total-style" style="color:#27ae60;"><td colspan="3">TOTAL AMOUNT (RS.)</td><td>RS. ${totalAmount.toFixed(2)}</td></tr>
+            </tbody></table><br/>`;
+        });
+
+        excelTemplate += `
+        <table>
+            <thead>
+                <tr><th colspan="5" class="block-title">📊 MATERIAL WISE STATEMENT SUMMARY</th></tr>
+                <tr>
+                    <th class="th-style sno-xl-width">S.NO.</th>
+                    <th class="th-style">MATERIAL NAME</th>
+                    <th class="th-style">TOTAL MT (CUM)</th>
+                    <th class="th-style">RATE (RS)</th>
+                    <th class="th-style">TOTAL AMOUNT (RS)</th>
+                </tr>
+            </thead>
+            <tbody>`;
+
+        let grandMT = 0, grandAmount = 0;
+        let xlSumSerial = 1;
+        materialsList.forEach(mat => {
+            const filtered = royaltyRecords.filter(r => {
+                if (r.material !== mat) return false;
+                if (lockDates.start && lockDates.end) return r.date >= lockDates.start && r.date <= lockDates.end;
+                return true;
+            });
+            let totalWeight = filtered.reduce((sum, item) => sum + item.weight, 0);
+            let mtValue = totalWeight > 0 ? (totalWeight / 1.8) : 0;
+            let totalAmount = mtValue * commonRoyaltyRate;
+            grandMT += mtValue; grandAmount += totalAmount;
+
+            excelTemplate += `<tr><td class="sno-xl-width">${xlSumSerial++}</td><td>${mat}</td><td>${mtValue.toFixed(4)}</td><td>${commonRoyaltyRate.toFixed(2)}</td><td>RS. ${totalAmount.toFixed(2)}</td></tr>`;
+        });
+
+        excelTemplate += `
+            <tr class="grand-total">
+                <td></td><td>GRAND TOTAL</td><td>${grandMT.toFixed(4)}</td><td>${commonRoyaltyRate.toFixed(2)}</td><td>RS. ${grandAmount.toFixed(2)}</td>
+            </tr>
+        </tbody></table></body></html>`;
+
+        let blob = new Blob([excelTemplate], { type: 'application/vnd.ms-excel' });
+        let link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `NAME_OF_WORK_${titleName.trim().replace(/\s+/g, '_')}_Report.xls`;
+        document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    }
+</script>
+</body>
+</html>

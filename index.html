@@ -733,13 +733,31 @@
                 currentProfileKey = data.currentProfileKey || "DEFAULT_WORK";
                 sortingOrdersMap = data.sortingOrdersMap || {};
             }
-            refreshActiveProfileDropdown();
-            loadCurrentProfileDataContext();
+            return reconcileProfilesFromFirestore();
         }).catch((error) => {
             console.error("Firebase settings error: ", error);
+            return reconcileProfilesFromFirestore();
+        }).then(() => {
             refreshActiveProfileDropdown();
             loadCurrentProfileDataContext();
         });
+    }
+
+    // 🔄 Discover profile documents that exist in Firestore's "profiles" collection
+    // but are missing from the cached profilesMap (e.g. created directly from the
+    // Firebase console, or a previous save that failed due to security rules).
+    // Without this, data can exist in Firestore but never show up in the dropdown.
+    function reconcileProfilesFromFirestore() {
+        return db.collection("profiles").get().then((snapshot) => {
+            let changed = false;
+            snapshot.forEach(doc => {
+                if (!profilesMap[doc.id]) {
+                    profilesMap[doc.id] = { name: doc.id };
+                    changed = true;
+                }
+            });
+            if (changed) saveSystemSettingsToFirebase();
+        }).catch(err => console.error("Profile reconcile failed:", err));
     }
 
     function saveSystemSettingsToFirebase() {

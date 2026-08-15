@@ -601,7 +601,7 @@
                             <label>FORM NO / SLIP NO</label>
                             <input type="text" id="formNo" maxlength="13" placeholder="e.g. IJ11512073815" class="data-font nav-input" oninput="this.value = this.value.toUpperCase(); cleanErrorsOnInput();" required>
                             <span id="slipFormatError" class="error-msg">⚠️ ENTRY FORMAAT GALAT HAI! PEHLE 2 ALPHABETS AUR KUL 13 CHARACTERS HONA ZAROORI HAI!</span>
-                            <span id="slipDuplicateError" class="error-msg">⚠️ DUPTICATE ENTRY! YEH SLIP PEHLE SE ENTERED HAI.</span>
+                            <span id="slipDuplicateError" class="error-msg">⚠️ DUPLICATE ENTRY! YEH SLIP PEHLE SE ENTERED HAI.</span>
                         </div>
                         <div class="form-group">
                             <label>DATE</label>
@@ -680,10 +680,49 @@
     let globalSearchString = "";
     let sortingOrdersMap = {};
 
+    // 🔒 XSS-safe escaping for any user-typed value inserted via innerHTML
+    function escapeHtml(str) {
+        if (str === null || str === undefined) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    // ⏱️ Debounce utility so we don't hammer Firestore on every keystroke
+    function debounce(fn, delay) {
+        let timer;
+        return function(...args) {
+            clearTimeout(timer);
+            timer = setTimeout(() => fn.apply(this, args), delay);
+        };
+    }
+
     window.onload = function() {
         setupArrowKeyNavigation();
+        setupDelegatedTableEvents();
         loadSystemSettings();
     };
+
+    // 🖱️ Event delegation for edit/delete buttons & sort dropdowns
+    // (avoids injecting IDs/material names into inline onclick strings)
+    function setupDelegatedTableEvents() {
+        const container = document.getElementById('statementsContainer');
+        container.addEventListener('click', function(e) {
+            const btn = e.target.closest('button[data-action]');
+            if (!btn) return;
+            const id = btn.getAttribute('data-id');
+            if (btn.dataset.action === 'edit') editRecord(id);
+            else if (btn.dataset.action === 'delete') deleteRecord(id);
+        });
+        container.addEventListener('change', function(e) {
+            const sel = e.target.closest('.sort-control-box');
+            if (!sel) return;
+            updateTableSortingOrder(sel.dataset.material, sel.value);
+        });
+    }
 
     // Cloud Database se Global Application Settings fetch karein
     function loadSystemSettings() {
@@ -838,6 +877,13 @@
         return formatValid && !isDuplicate;
     }
 
+    const debouncedSaveWorkName = debounce(function(val) {
+        // set(..., {merge:true}) instead of update() so this works even if
+        // the profile document doesn't exist in Firestore yet (e.g. DEFAULT_WORK)
+        db.collection("profiles").doc(currentProfileKey).set({ savedWorkName: val }, { merge: true })
+          .catch(err => console.error("Work name save failed:", err));
+    }, 600);
+
     function handleWorkNameChange() {
         let val = document.getElementById('workNameInput').value;
         const valueSpan = document.getElementById('workNameValue');
@@ -850,7 +896,8 @@
             valueSpan.innerText = "";
             container.style.display = "none";
         }
-        db.collection("profiles").doc(currentProfileKey).update({ savedWorkName: val });
+        savedWorkName = val;
+        debouncedSaveWorkName(val);
     }
 
     function switchTab(pageId, btnId) {
@@ -863,9 +910,12 @@
     function handleRangeChange() {
         lockDates.start = document.getElementById('lockStartDate').value;
         lockDates.end = document.getElementById('lockEndDate').value;
-        db.collection("profiles").doc(currentProfileKey).update({ lockDates: lockDates }).then(() => {
+        db.collection("profiles").doc(currentProfileKey).set({ lockDates: lockDates }, { merge: true }).then(() => {
             validateLiveDate();
             renderAllStatements();
+        }).catch(err => {
+            console.error("Date lock save failed:", err);
+            alert("DATE LOCK SAVE NAHI HO SAKA! " + err.message);
         });
     }
 
@@ -877,11 +927,16 @@
         else { errorSpan.style.display = 'none'; return true; }
     }
 
+    const debouncedSaveRate = debounce(function(rate) {
+        db.collection("profiles").doc(currentProfileKey).set({ commonRoyaltyRate: rate }, { merge: true })
+          .catch(err => console.error("Rate save failed:", err));
+    }, 600);
+
     function updateCommonRate(val) {
         commonRoyaltyRate = val ? parseFloat(val) : 0;
-        db.collection("profiles").doc(currentProfileKey).update({ commonRoyaltyRate: commonRoyaltyRate }).then(() => {
-            renderAllStatements();
-        });
+        if (isNaN(commonRoyaltyRate)) commonRoyaltyRate = 0;
+        renderAllStatements(); // instant local recalculation, no need to wait for Firestore
+        debouncedSaveRate(commonRoyaltyRate);
     }
 
     function updateMaterialDropdowns() {
@@ -899,9 +954,15 @@
         const matName = input.value.trim().toUpperCase();
         if(!matName) return alert("KRIPYA MATERIAL KA NAAM DALEIN!");
         if(materialsList.includes(matName)) return alert("YEH MATERIAL PEHLE SE ADD HAI!");
-        materialsList.push(matName);
-        db.collection("profiles").doc(currentProfileKey).update({ materials: materialsList }).then(() => {
+        const updatedList = [...materialsList, matName];
+        // set(..., {merge:true}) so this works even if the profile document
+        // (e.g. DEFAULT_WORK) was never explicitly created in Firestore
+        db.collection("profiles").doc(currentProfileKey).set({ materials: updatedList }, { merge: true }).then(() => {
+            materialsList = updatedList;
             input.value = ''; updateMaterialDropdowns(); renderAllStatements();
+        }).catch(err => {
+            console.error("Add material failed:", err);
+            alert("MATERIAL ADD NAHI HO SAKA! ERROR: " + err.message);
         });
     }
 
@@ -910,23 +971,29 @@
         const matToDelete = select.value;
         if(!matToDelete) return;
         if(confirm(`WARNING: Kya aap sach me "${matToDelete}" ko delete karna chahte hain?`)) {
-            materialsList = materialsList.filter(m => m !== matToDelete);
-            db.collection("profiles").doc(currentProfileKey).update({ materials: materialsList });
-            
-            let batch = db.batch();
-            db.collection("profiles").doc(currentProfileKey).collection("records")
-              .where("material", "==", matToDelete).get().then((snapshot) => {
-                  snapshot.forEach(doc => batch.delete(doc.ref));
-                  batch.commit().then(() => {
-                      fetchRecordsFromFirebase();
-                      updateMaterialDropdowns();
-                  });
+            const updatedList = materialsList.filter(m => m !== matToDelete);
+            db.collection("profiles").doc(currentProfileKey).set({ materials: updatedList }, { merge: true })
+              .then(() => {
+                  materialsList = updatedList;
+                  let batch = db.batch();
+                  return db.collection("profiles").doc(currentProfileKey).collection("records")
+                    .where("material", "==", matToDelete).get().then((snapshot) => {
+                        snapshot.forEach(doc => batch.delete(doc.ref));
+                        return batch.commit();
+                    });
+              }).then(() => {
+                  fetchRecordsFromFirebase();
+                  updateMaterialDropdowns();
+              }).catch(err => {
+                  console.error("Delete material failed:", err);
+                  alert("MATERIAL DELETE NAHI HO SAKA! ERROR: " + err.message);
               });
         }
     }
 
     function saveFormEntry(event) {
         event.preventDefault();
+        if (materialsList.length === 0) return alert("KRIPYA PEHLE 'WORK DETAIL' TAB SE KOI MATERIAL FIELD ADD KAREIN!");
         if (!lockDates.start || !lockDates.end) return alert("KRIPYA PEHLE UPAR 'DATE RANGE LOCK' SET KAREIN!");
         if (!validateLiveDate()) return alert("ENTRY BLOCK HAI! SELECTED RANGE KE BEECH KI DATE HI CHALEGI.");
         if (!validateSlipOnSubmit()) return;
@@ -1073,8 +1140,8 @@
             
             let html = `
                 <div class="block-header">
-                    <span>NAME OF MINERAL - ${mat}</span>
-                    <select class="sort-control-box" onchange="updateTableSortingOrder('${mat}', this.value)">
+                    <span>NAME OF MINERAL - ${escapeHtml(mat)}</span>
+                    <select class="sort-control-box" data-material="${escapeHtml(mat)}">
                         <option value="asc" ${currentSortOrder === "asc" ? "selected" : ""}>📅 OLDEST FIRST</option>
                         <option value="desc" ${currentSortOrder === "desc" ? "selected" : ""}>📅 NEWEST FIRST</option>
                         <option value="recent" ${currentSortOrder === "recent" ? "selected" : ""}>⏱️ RECENT ENTRY FIRST</option>
@@ -1102,12 +1169,12 @@
                     
                     html += `<tr class="${highlightClass}">
                                 <td class="input-data sno-col">${serialNo++}</td>
-                                <td class="input-data">${item.formNo}</td>
-                                <td class="input-data">${formattedDate}</td>
+                                <td class="input-data">${escapeHtml(item.formNo)}</td>
+                                <td class="input-data">${escapeHtml(formattedDate)}</td>
                                 <td class="input-data">${item.weight.toFixed(2)}</td>
                                 <td style="text-align:center;" class="action-col input-data">
-                                    <button class="btn-row-action btn-edit" onclick="editRecord('${item.id}')" title="Edit">✏️</button>
-                                    <button class="btn-row-action btn-delete" onclick="deleteRecord('${item.id}')">❌</button>
+                                    <button class="btn-row-action btn-edit" data-action="edit" data-id="${escapeHtml(item.id)}" title="Edit">✏️</button>
+                                    <button class="btn-row-action btn-delete" data-action="delete" data-id="${escapeHtml(item.id)}">❌</button>
                                 </td>
                             </tr>`;
                 });
@@ -1132,7 +1199,7 @@
 
             let sumRow = document.createElement('tr');
             sumRow.innerHTML = `<td class="input-data sno-col">${summarySerial++}</td>
-                                <td class="label-font">${mat}</td>
+                                <td class="label-font">${escapeHtml(mat)}</td>
                                 <td class="highlight-value-font" style="font-size:14px !important;">${mtValue.toFixed(4)}</td>
                                 <td class="highlight-value-font" style="font-size:14px !important;">${commonRoyaltyRate.toFixed(2)}</td>
                                 <td class="highlight-value-font" style="font-size:14px !important;">RS. ${totalAmount.toFixed(2)}</td>`;
@@ -1169,7 +1236,7 @@
         </head>
         <body>
             <div class="main-header">ROYALTY STATEMENT</div>
-            <div class="main-header">NAME OF WORK - ${titleName}</div>
+            <div class="main-header">NAME OF WORK - ${escapeHtml(titleName)}</div>
             <div class="main-header">${rangeHeading}</div>
             <br/>`;
 
@@ -1187,7 +1254,7 @@
             excelTemplate += `
             <table>
                 <thead>
-                    <tr><th colspan="4" class="block-title">NAME OF MINERAL - ${mat}</th></tr>
+                    <tr><th colspan="4" class="block-title">NAME OF MINERAL - ${escapeHtml(mat)}</th></tr>
                     <tr>
                         <th class="th-style sno-xl-width">S.NO.</th>
                         <th class="th-style">FORM NO</th>
@@ -1203,7 +1270,7 @@
                 let xlSerial = 1;
                 filtered.forEach(item => {
                     let formattedDate = item.date.split('-').reverse().join('-');
-                    excelTemplate += `<tr><td class="sno-xl-width">${xlSerial++}</td><td>${item.formNo}</td><td>${formattedDate}</td><td>${item.weight.toFixed(2)}</td></tr>`;
+                    excelTemplate += `<tr><td class="sno-xl-width">${xlSerial++}</td><td>${escapeHtml(item.formNo)}</td><td>${escapeHtml(formattedDate)}</td><td>${item.weight.toFixed(2)}</td></tr>`;
                 });
             }
 
@@ -1241,7 +1308,7 @@
             let totalAmount = mtValue * commonRoyaltyRate;
             grandMT += mtValue; grandAmount += totalAmount;
 
-            excelTemplate += `<tr><td class="sno-xl-width">${xlSumSerial++}</td><td>${mat}</td><td>${mtValue.toFixed(4)}</td><td>${commonRoyaltyRate.toFixed(2)}</td><td>RS. ${totalAmount.toFixed(2)}</td></tr>`;
+            excelTemplate += `<tr><td class="sno-xl-width">${xlSumSerial++}</td><td>${escapeHtml(mat)}</td><td>${mtValue.toFixed(4)}</td><td>${commonRoyaltyRate.toFixed(2)}</td><td>RS. ${totalAmount.toFixed(2)}</td></tr>`;
         });
 
         excelTemplate += `

@@ -2,7 +2,7 @@
 <html lang="hi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=1000">
     <title>Royalty Statement Software</title>
     <style>
         :root {
@@ -439,8 +439,17 @@
                 color: #000000 !important;
                 text-align: center !important;
                 margin-top: 0 !important;
-                margin-bottom: 20px !important;
+                margin-bottom: 4px !important;
                 border-bottom: none !important;
+            }
+
+            #bondStatementInfo {
+                display: block !important;
+                font-size: 11px !important;
+                color: #000000 !important;
+                text-align: center !important;
+                margin-top: 0 !important;
+                margin-bottom: 20px !important;
             }
             
             .block-header, .summary-header {
@@ -511,6 +520,8 @@
         <span class="english-label">NAME OF WORK - </span><span id="workNameValue" class="kruti-font"></span>
     </div>
 
+    <div id="bondStatementInfo" style="text-align:center; margin-top:-15px; margin-bottom:20px; font-size:14px; color:#555;"></div>
+
     <div class="tabs-header-container">
         <div class="tabs-nav">
             <button class="tab-btn active" id="btnSettingsTab" onclick="switchTab('settingsPage', 'btnSettingsTab')">📁 Work Detail</button>
@@ -528,15 +539,26 @@
             
             <div class="profile-management-mini">
                 <div class="profile-left-side">
-                    <span class="english-label" style="font-size:12px; color:var(--secondary-color);">WORK PROFILE:</span>
+                    <span class="english-label" style="font-size:12px; color:var(--secondary-color);">BOND NUMBER:</span>
                     <select id="activeProfileSelect" class="mini-select" onchange="switchActiveProfile(this.value)"></select>
-                    <input type="text" id="newProfileInputName" class="mini-input" placeholder="NEW PROFILE REF TAG...">
-                    <button type="button" class="btn-system btn-sys-profile" onclick="createNewProjectProfile()">+ ADD WORK</button>
+                    <input type="text" id="newProfileInputName" class="mini-input" placeholder="NEW BOND NUMBER...">
+                    <button type="button" class="btn-system btn-sys-profile" onclick="createNewProjectProfile()">+ ADD BOND</button>
                 </div>
                 <div class="profile-right-side">
                     <button class="btn-system btn-sys-backup" onclick="exportSystemBackup()">📥 Backup Data</button>
                     <button class="btn-system btn-sys-backup" onclick="document.getElementById('importFilePicker').click()">📤 Restore Data</button>
                     <input type="file" id="importFilePicker" style="display:none;" accept=".json" onchange="importSystemBackup(event)">
+                </div>
+            </div>
+
+            <div class="profile-management-mini" style="background:#eef6fb; border-color:#bcdff0;">
+                <div class="profile-left-side">
+                    <span class="english-label" style="font-size:12px; color:var(--secondary-color);">STATEMENT (UNDER THIS BOND):</span>
+                    <select id="activeStatementSelect" class="mini-select" onchange="switchActiveStatement(this.value)"></select>
+                    <button type="button" class="btn-system btn-sys-profile" onclick="createNewStatementPrompt()">+ NEW STATEMENT</button>
+                </div>
+                <div class="profile-right-side">
+                    <span style="font-size:11px; color:#7f8c8d; max-width:260px;">Naya statement banane se purana record safe rehta hai aur naye statement me duplicate slip check bhi is bond ke sabhi statements ke against hota hai.</span>
                 </div>
             </div>
 
@@ -601,7 +623,7 @@
                             <label>FORM NO / SLIP NO</label>
                             <input type="text" id="formNo" maxlength="13" placeholder="e.g. IJ11512073815" class="data-font nav-input" oninput="this.value = this.value.toUpperCase(); cleanErrorsOnInput();" required>
                             <span id="slipFormatError" class="error-msg">⚠️ ENTRY FORMAAT GALAT HAI! PEHLE 2 ALPHABETS AUR KUL 13 CHARACTERS HONA ZAROORI HAI!</span>
-                            <span id="slipDuplicateError" class="error-msg">⚠️ DUPLICATE ENTRY! YEH SLIP PEHLE SE ENTERED HAI.</span>
+                            <span id="slipDuplicateError" class="error-msg">⚠️ DUPLICATE ENTRY! YEH SLIP IS BOND KE KISI STATEMENT ME PEHLE SE ENTERED HAI.</span>
                         </div>
                         <div class="form-group">
                             <label>DATE</label>
@@ -670,11 +692,20 @@
     let profilesMap = { "DEFAULT_WORK": { name: "DEFAULT_WORK" } };
     let currentProfileKey = "DEFAULT_WORK";
 
+    // Each BOND can have multiple STATEMENTS (fresh periods). Materials & work name
+    // are shared at the bond level; lockDates/rate/records live inside each statement.
+    let statementsMap = {};        // { stmtId: { label, createdAt, lockDates, commonRoyaltyRate } }
+    let currentStatementId = null;
+
     let materialsList = [];
     let royaltyRecords = [];
     let lockDates = { start: '', end: '' };
     let commonRoyaltyRate = 0;
     let savedWorkName = '';
+
+    // formNo -> recordId, aggregated across ALL statements of the current bond,
+    // used so the same slip can never be entered twice under one bond even in a new statement.
+    let bondSlipIndex = new Map();
     
     let latestRecordId = null;
     let globalSearchString = "";
@@ -733,31 +764,13 @@
                 currentProfileKey = data.currentProfileKey || "DEFAULT_WORK";
                 sortingOrdersMap = data.sortingOrdersMap || {};
             }
-            return reconcileProfilesFromFirestore();
+            refreshActiveProfileDropdown();
+            loadCurrentProfileDataContext();
         }).catch((error) => {
             console.error("Firebase settings error: ", error);
-            return reconcileProfilesFromFirestore();
-        }).then(() => {
             refreshActiveProfileDropdown();
             loadCurrentProfileDataContext();
         });
-    }
-
-    // 🔄 Discover profile documents that exist in Firestore's "profiles" collection
-    // but are missing from the cached profilesMap (e.g. created directly from the
-    // Firebase console, or a previous save that failed due to security rules).
-    // Without this, data can exist in Firestore but never show up in the dropdown.
-    function reconcileProfilesFromFirestore() {
-        return db.collection("profiles").get().then((snapshot) => {
-            let changed = false;
-            snapshot.forEach(doc => {
-                if (!profilesMap[doc.id]) {
-                    profilesMap[doc.id] = { name: doc.id };
-                    changed = true;
-                }
-            });
-            if (changed) saveSystemSettingsToFirebase();
-        }).catch(err => console.error("Profile reconcile failed:", err));
     }
 
     function saveSystemSettingsToFirebase() {
@@ -782,20 +795,30 @@
     function createNewProjectProfile() {
         const input = document.getElementById('newProfileInputName');
         let val = input.value.trim().toUpperCase().replace(/\s+/g, '_');
-        if(!val) return alert("Kripya Work Profile ka reference name dalein!");
-        if(profilesMap[val]) return alert("Yeh reference key pehle se bani hui hai!");
+        if(!val) return alert("Kripya Bond Number dalein!");
+        if(profilesMap[val]) return alert("Yeh Bond Number pehle se bana hua hai!");
 
         profilesMap[val] = { name: val };
         saveSystemSettingsToFirebase();
-        
-        db.collection("profiles").doc(val).set({
+
+        const bondRef = db.collection("profiles").doc(val);
+        const stmtRef = bondRef.collection("statements").doc();
+        const stmtData = { label: 'STATEMENT 1', createdAt: Date.now(), lockDates: { start: '', end: '' }, commonRoyaltyRate: 0 };
+
+        let batch = db.batch();
+        batch.set(bondRef, {
             materials: ['GRIT', 'DUST', 'SAND'],
-            lockDates: { start: '', end: '' },
-            commonRoyaltyRate: 0,
-            savedWorkName: ''
-        }).then(() => {
+            savedWorkName: '',
+            currentStatementId: stmtRef.id
+        });
+        batch.set(stmtRef, stmtData);
+
+        batch.commit().then(() => {
             input.value = '';
             switchActiveProfile(val);
+        }).catch(err => {
+            console.error("New bond create failed:", err);
+            alert("NAYA BOND BANANE ME ERROR AAYA! " + err.message);
         });
     }
 
@@ -806,24 +829,118 @@
     }
 
     function loadCurrentProfileDataContext() {
-        db.collection("profiles").doc(currentProfileKey).get().then((doc) => {
-            if (doc.exists) {
-                let data = doc.data();
-                materialsList = data.materials || ['GRIT', 'DUST', 'SAND'];
-                lockDates = data.lockDates || { start: '', end: '' };
-                commonRoyaltyRate = parseFloat(data.commonRoyaltyRate) || 0;
-                savedWorkName = data.savedWorkName || '';
-            } else {
-                materialsList = ['GRIT', 'DUST', 'SAND'];
-                lockDates = { start: '', end: '' };
-                commonRoyaltyRate = 0;
-                savedWorkName = '';
-            }
+        const bondRef = db.collection("profiles").doc(currentProfileKey);
+        bondRef.get().then((doc) => {
+            let data = doc.exists ? doc.data() : {};
+            materialsList = data.materials || ['GRIT', 'DUST', 'SAND'];
+            savedWorkName = data.savedWorkName || '';
+            currentStatementId = data.currentStatementId || null;
+
+            document.getElementById('workNameInput').value = savedWorkName;
+            handleWorkNameChange();
+            updateMaterialDropdowns();
+
+            return bondRef.collection('statements').orderBy('createdAt', 'asc').get().then(snap => {
+                if (!snap.empty) {
+                    statementsMap = {};
+                    snap.forEach(d => statementsMap[d.id] = d.data());
+                    if (!currentStatementId || !statementsMap[currentStatementId]) {
+                        let ids = Object.keys(statementsMap);
+                        currentStatementId = ids[ids.length - 1];
+                    }
+                    refreshStatementDropdown();
+                    return loadStatementContext(currentStatementId);
+                }
+
+                // 🔁 LEGACY MIGRATION: agar is bond me pehle se statements nahi hain,
+                // par purana flat "records" collection hai (old data structure),
+                // to use safely ek "STATEMENT 1" me convert kar dein — koi data na khoye.
+                return bondRef.collection('records').get().then(oldRecordsSnap => {
+                    let legacyLockDates = data.lockDates || { start: '', end: '' };
+                    let legacyRate = parseFloat(data.commonRoyaltyRate) || 0;
+                    let newStmtRef = bondRef.collection('statements').doc();
+                    let stmtData = {
+                        label: 'STATEMENT 1',
+                        createdAt: Date.now(),
+                        lockDates: legacyLockDates,
+                        commonRoyaltyRate: legacyRate
+                    };
+
+                    let batch = db.batch();
+                    batch.set(newStmtRef, stmtData);
+                    oldRecordsSnap.forEach(rDoc => {
+                        batch.set(newStmtRef.collection('records').doc(rDoc.id), rDoc.data());
+                    });
+                    batch.set(bondRef, { currentStatementId: newStmtRef.id }, { merge: true });
+
+                    return batch.commit().then(() => {
+                        statementsMap = { [newStmtRef.id]: stmtData };
+                        currentStatementId = newStmtRef.id;
+                        refreshStatementDropdown();
+                        return loadStatementContext(currentStatementId);
+                    });
+                });
+            });
+        }).catch(err => {
+            console.error("Bond context load failed:", err);
+            alert("BOND DATA LOAD NAHI HO SAKA! " + err.message);
+        });
+    }
+
+    function refreshStatementDropdown() {
+        const select = document.getElementById('activeStatementSelect');
+        select.innerHTML = '';
+        Object.keys(statementsMap).forEach(sid => {
+            let opt = document.createElement('option');
+            opt.value = sid;
+            opt.innerText = statementsMap[sid].label || sid;
+            if (sid === currentStatementId) opt.selected = true;
+            select.appendChild(opt);
+        });
+    }
+
+    function switchActiveStatement(stmtId) {
+        currentStatementId = stmtId;
+        db.collection("profiles").doc(currentProfileKey).set({ currentStatementId: stmtId }, { merge: true });
+        loadStatementContext(stmtId);
+    }
+
+    function createNewStatementPrompt() {
+        const count = Object.keys(statementsMap).length + 1;
+        let label = prompt("NAYE STATEMENT KA NAAM DALEIN (ya khaali chhod dein default ke liye):", `STATEMENT ${count}`);
+        if (label === null) return; // user ne cancel kiya
+        label = label.trim() || `STATEMENT ${count}`;
+
+        if (!confirm(`Kya aap is BOND ke under naya statement "${label}" banana chahte hain?\n\nPurana statement history me SAFE rahega. Naya statement bilkul KHAALI shuru hoga aur duplicate slip check is bond ke sabhi statements ke against hota rahega.`)) return;
+
+        const bondRef = db.collection("profiles").doc(currentProfileKey);
+        const newStmtRef = bondRef.collection('statements').doc();
+        const stmtData = { label: label.toUpperCase(), createdAt: Date.now(), lockDates: { start: '', end: '' }, commonRoyaltyRate: 0 };
+
+        newStmtRef.set(stmtData).then(() => {
+            statementsMap[newStmtRef.id] = stmtData;
+            currentStatementId = newStmtRef.id;
+            return bondRef.set({ currentStatementId: currentStatementId }, { merge: true });
+        }).then(() => {
+            refreshStatementDropdown();
+            loadStatementContext(currentStatementId);
+        }).catch(err => {
+            console.error("New statement create failed:", err);
+            alert("NAYA STATEMENT BANANE ME ERROR AAYA! " + err.message);
+        });
+    }
+
+    function loadStatementContext(stmtId) {
+        const stmtRef = db.collection("profiles").doc(currentProfileKey).collection("statements").doc(stmtId);
+        return stmtRef.get().then(doc => {
+            let data = doc.exists ? doc.data() : { lockDates: { start: '', end: '' }, commonRoyaltyRate: 0, label: 'STATEMENT' };
+            lockDates = data.lockDates || { start: '', end: '' };
+            commonRoyaltyRate = parseFloat(data.commonRoyaltyRate) || 0;
+            statementsMap[stmtId] = data;
 
             document.getElementById('lockStartDate').value = lockDates.start;
             document.getElementById('lockEndDate').value = lockDates.end;
             document.getElementById('entryDate').valueAsDate = new Date();
-            document.getElementById('workNameInput').value = savedWorkName;
             document.getElementById('commonRoyaltyRateInput').value = commonRoyaltyRate || '';
             document.getElementById('editingRecordId').value = '';
             document.getElementById('formNo').value = '';
@@ -833,16 +950,28 @@
             latestRecordId = null;
             globalSearchString = "";
 
-            handleWorkNameChange();
-            updateMaterialDropdowns();
+            updateBondStatementInfoDisplay();
             hideErrors();
 
-            fetchRecordsFromFirebase();
+            return fetchRecordsFromFirebase().then(() => refreshBondWideSlipIndex());
+        }).catch(err => {
+            console.error("Statement context load failed:", err);
+            alert("STATEMENT DATA LOAD NAHI HO SAKA! " + err.message);
         });
     }
 
+    function updateBondStatementInfoDisplay() {
+        const el = document.getElementById('bondStatementInfo');
+        if (!el) return;
+        const stmtLabel = (statementsMap[currentStatementId] && statementsMap[currentStatementId].label) || '';
+        el.innerHTML = `<span class="english-label">BOND NUMBER - </span><span class="kruti-font">${escapeHtml(currentProfileKey)}</span>
+                         &nbsp;|&nbsp;
+                         <span class="english-label">STATEMENT - </span><span class="kruti-font">${escapeHtml(stmtLabel)}</span>`;
+    }
+
     function fetchRecordsFromFirebase() {
-        db.collection("profiles").doc(currentProfileKey).collection("records").get().then((querySnapshot) => {
+        return db.collection("profiles").doc(currentProfileKey).collection("statements").doc(currentStatementId)
+          .collection("records").get().then((querySnapshot) => {
             royaltyRecords = [];
             querySnapshot.forEach((doc) => {
                 let res = doc.data();
@@ -850,6 +979,26 @@
                 royaltyRecords.push(res);
             });
             renderAllStatements();
+        });
+    }
+
+    // 🔒 Bond-wide duplicate protection: collects formNo across EVERY statement
+    // under the current bond, so the same slip can't be entered twice even in a new statement.
+    function refreshBondWideSlipIndex() {
+        bondSlipIndex = new Map();
+        const bondRef = db.collection("profiles").doc(currentProfileKey);
+        const stmtIds = Object.keys(statementsMap);
+        return Promise.all(stmtIds.map(sid =>
+            bondRef.collection('statements').doc(sid).collection('records').get()
+        )).then(snapshots => {
+            snapshots.forEach(snap => {
+                snap.forEach(doc => {
+                    let d = doc.data();
+                    if (d.formNo) bondSlipIndex.set(d.formNo, doc.id);
+                });
+            });
+        }).catch(err => {
+            console.error("Bond-wide slip index refresh failed:", err);
         });
     }
 
@@ -889,7 +1038,8 @@
         const formatValid = /^[A-Z]{2}[A-Z0-9]{11}$/.test(slipVal);
         formatError.style.display = formatValid ? 'none' : 'block';
 
-        const isDuplicate = royaltyRecords.some(r => r.formNo === slipVal && r.id != editId);
+        const existingId = bondSlipIndex.get(slipVal);
+        const isDuplicate = !!existingId && existingId != editId;
         duplicateError.style.display = isDuplicate ? 'block' : 'none';
 
         return formatValid && !isDuplicate;
@@ -928,7 +1078,8 @@
     function handleRangeChange() {
         lockDates.start = document.getElementById('lockStartDate').value;
         lockDates.end = document.getElementById('lockEndDate').value;
-        db.collection("profiles").doc(currentProfileKey).set({ lockDates: lockDates }, { merge: true }).then(() => {
+        db.collection("profiles").doc(currentProfileKey).collection("statements").doc(currentStatementId)
+          .set({ lockDates: lockDates }, { merge: true }).then(() => {
             validateLiveDate();
             renderAllStatements();
         }).catch(err => {
@@ -946,7 +1097,8 @@
     }
 
     const debouncedSaveRate = debounce(function(rate) {
-        db.collection("profiles").doc(currentProfileKey).set({ commonRoyaltyRate: rate }, { merge: true })
+        db.collection("profiles").doc(currentProfileKey).collection("statements").doc(currentStatementId)
+          .set({ commonRoyaltyRate: rate }, { merge: true })
           .catch(err => console.error("Rate save failed:", err));
     }, 600);
 
@@ -988,19 +1140,24 @@
         const select = document.getElementById('deleteMaterialSelect');
         const matToDelete = select.value;
         if(!matToDelete) return;
-        if(confirm(`WARNING: Kya aap sach me "${matToDelete}" ko delete karna chahte hain?`)) {
+        if(confirm(`WARNING: Kya aap sach me "${matToDelete}" ko delete karna chahte hain? Yeh is BOND ke SABHI STATEMENTS se related entries hata dega.`)) {
             const updatedList = materialsList.filter(m => m !== matToDelete);
-            db.collection("profiles").doc(currentProfileKey).set({ materials: updatedList }, { merge: true })
+            const bondRef = db.collection("profiles").doc(currentProfileKey);
+            bondRef.set({ materials: updatedList }, { merge: true })
               .then(() => {
                   materialsList = updatedList;
-                  let batch = db.batch();
-                  return db.collection("profiles").doc(currentProfileKey).collection("records")
-                    .where("material", "==", matToDelete).get().then((snapshot) => {
-                        snapshot.forEach(doc => batch.delete(doc.ref));
-                        return batch.commit();
-                    });
+                  const stmtIds = Object.keys(statementsMap);
+                  return Promise.all(stmtIds.map(sid =>
+                      bondRef.collection('statements').doc(sid).collection('records')
+                        .where("material", "==", matToDelete).get().then((snapshot) => {
+                            let batch = db.batch();
+                            snapshot.forEach(doc => batch.delete(doc.ref));
+                            return batch.commit();
+                        })
+                  ));
               }).then(() => {
                   fetchRecordsFromFirebase();
+                  refreshBondWideSlipIndex();
                   updateMaterialDropdowns();
               }).catch(err => {
                   console.error("Delete material failed:", err);
@@ -1026,15 +1183,18 @@
             timestamp: Date.now()
         };
 
+        const recordsRef = db.collection("profiles").doc(currentProfileKey)
+            .collection("statements").doc(currentStatementId).collection("records");
+
         if (editId) {
-            db.collection("profiles").doc(currentProfileKey).collection("records").doc(editId).set(recordData).then(() => {
+            recordsRef.doc(editId).set(recordData).then(() => {
                 latestRecordId = editId;
                 document.getElementById('editingRecordId').value = '';
                 document.getElementById('btnSubmitForm').innerText = "💾 SAVE";
                 postSaveActions();
             });
         } else {
-            let newDocRef = db.collection("profiles").doc(currentProfileKey).collection("records").doc();
+            let newDocRef = recordsRef.doc();
             newDocRef.set(recordData).then(() => {
                 latestRecordId = newDocRef.id;
                 postSaveActions();
@@ -1045,7 +1205,7 @@
     function postSaveActions() {
         document.getElementById('formNo').value = ''; document.getElementById('weight').value = '';
         hideErrors();
-        fetchRecordsFromFirebase();
+        fetchRecordsFromFirebase().then(() => refreshBondWideSlipIndex());
         document.querySelector('.nav-input').focus();
     }
 
@@ -1068,8 +1228,9 @@
     function deleteRecord(id) {
         if(confirm("KYA AAP IS ENTRY KO HATANA CHAHTE HAIN?")) {
             if(latestRecordId == id) latestRecordId = null;
-            db.collection("profiles").doc(currentProfileKey).collection("records").doc(id).delete().then(() => {
-                fetchRecordsFromFirebase();
+            db.collection("profiles").doc(currentProfileKey).collection("statements").doc(currentStatementId)
+              .collection("records").doc(id).delete().then(() => {
+                fetchRecordsFromFirebase().then(() => refreshBondWideSlipIndex());
             });
         }
     }
@@ -1255,6 +1416,7 @@
         <body>
             <div class="main-header">ROYALTY STATEMENT</div>
             <div class="main-header">NAME OF WORK - ${escapeHtml(titleName)}</div>
+            <div class="main-header">BOND NUMBER - ${escapeHtml(currentProfileKey)} | STATEMENT - ${escapeHtml((statementsMap[currentStatementId] && statementsMap[currentStatementId].label) || '')}</div>
             <div class="main-header">${rangeHeading}</div>
             <br/>`;
 
